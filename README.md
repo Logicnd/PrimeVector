@@ -19,23 +19,23 @@ Follow these steps to install PrimeVector and its dependencies:
 1. Ensure you have Python 3.9+ installed.
 2. Clone the repository:
 
-   ```bash
-   git clone https://github.com/Logicnd/PrimeVector.git
-   cd PrimeVector
-   ```
+```bash
+git clone https://github.com/Logicnd/PrimeVector.git
+cd PrimeVector
+```
 
 3. (Optional) Create a virtual environment:
 
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
 4. Install dependencies:
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 
@@ -60,6 +60,75 @@ You can also explore the `examples/` and `scripts/` directories for more advance
 - `examples/` – Sample notebooks and scripts demonstrating framework usage.
 - `scripts/` – Command‑line tools for automation.
 - `tests/` – Unit tests for ensuring reliability.
+
+## HTTP API for Universal Clients
+
+In addition to using PrimeVector as a library, you can run it as a web service. The repository provides a FastAPI wrapper under `src/primevector_api/app.py` that exposes a simple REST API.
+
+### Running the API
+
+First, ensure you have installed the additional dependencies listed in `requirements.txt` (`fastapi`, `uvicorn[standard]`, and `pydantic`). Then start the server with:
+
+```bash
+uvicorn primevector_api.app:app --host 0.0.0.0 --port 8000
+```
+
+The service will launch on port `8000` by default. You can change the host or port as needed.
+
+### Endpoints
+
+- **POST `/execute`** – Accepts a JSON payload with a `prompt` string and returns a JSON response containing the model’s output.
+
+Example request:
+
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain the Prime Number Theorem."}'
+```
+
+Example response:
+
+```json
+{"response":"<model output here>"}
+iOS
+
+##### Integrating with iOS and other clients
+
+Since the API is language‑agnostic, any client capable of making HTTP requests can interact with PrimeVector. On iOS, you can use `URLSession` to send requests and decode the JSON response. Here's a minimal example in Swift:
+
+```swift
+import Foundation
+
+struct Prompt: Codable {
+    let prompt: String
+}
+
+struct ResponseData: Codable {
+    let response: String
+}
+
+func sendPrompt(_ text: String) {
+    guard let url = URL(string: "https://your-backend-domain.com/execute") else { return }
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    let payload = Prompt(prompt: text)
+    request.httpBody = try? JSONEncoder().encode(payload)
+
+    URLSession.shared.dataTask(with: request) { data, _, error in
+        guard let data = data, error == nil,
+              let decoded = try? JSONDecoder().decode(ResponseData.self, from: data) else {
+            print("Error:", error ?? NSError(domain: "com.primevector", code: -1, userInfo: nil))
+            return
+        }
+        print("Model response:", decoded.response)
+    }.resume()
+}
+```
+
+This pattern can be adapted to any environment (e.g., a JavaScript frontend or another Python service) by issuing an HTTP POST request to the `/execute` endpoint.
 
 ## Contributing
 
